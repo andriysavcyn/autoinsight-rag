@@ -47,7 +47,7 @@ def render_ui(chain):
     st.title("🚘 AutoInsight: AI Assistant")
     st.caption("Ask anything about your vehicle specifications, maintenance, or troubleshooting.")
 
-    car_image_url = "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?q=80&w=1000&auto=format&fit=crop"
+    car_image_url = "images/audi_rs5.jpeg"
     st.image(car_image_url, caption="Audi RS 5 Coupe (4.2L V8 FSI)", use_container_width=True)
     st.divider()
 
