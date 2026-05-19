@@ -10,7 +10,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-FILE_PATH = "data/audi_rs5_manual.pdf"
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+FILE_PATH = os.path.join(BASE_DIR, "data", "audi_rs5_manual.pdf")
 
 def load_and_split_pdf(file_path: str) -> List[Document]:
     # Loads a PDF file and splits it into overlapping chunks.
