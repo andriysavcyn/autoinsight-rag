@@ -1,8 +1,9 @@
-langchain_classic==1.0.7
-langchain_community==0.4.1
-langchain_core==1.4.0
-langchain_groq==1.1.2
-langchain_text_splitters==1.1.2
-python-dotenv==1.2.2
-streamlit==1.54.0
-streamlit==1.57.0
+langchain
+langchain-community
+langchain-core
+langchain-groq
+python-dotenv
+streamlit
+chromadb
+pydantic
+pypdf
