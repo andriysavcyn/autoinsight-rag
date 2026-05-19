@@ -1,74 +1,67 @@
-# 🚘 AutoInsight: Advanced RAG System for Vehicle Diagnostics
+# 🚘 AutoInsight: RAG Assistant for Audi RS5
 
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)
 ![LangChain](https://img.shields.io/badge/LangChain-Integration-121212?style=flat-square)
-![PyTorch](https://img.shields.io/badge/PyTorch-CPU_Optimized-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-CPU_Only-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)
 ![ChromaDB](https://img.shields.io/badge/Vector_DB-ChromaDB-FF6F00?style=flat-square)
 ![Llama 3.3](https://img.shields.io/badge/LLM-Llama_3.3_70B-0466C8?style=flat-square)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker&logoColor=white)
 
-## 📌 Project Overview
-**AutoInsight** is an intelligent, containerized conversational agent designed to provide precise, context-aware diagnostics and maintenance information for the **Audi RS5**. 
+## 📌 What is this?
+AutoInsight is a conversational AI assistant built to answer technical, diagnostic, and maintenance questions about the Audi RS5. 
 
-To mitigate LLM hallucinations and ensure mechanical accuracy, the system implements an **Advanced Retrieval-Augmented Generation (RAG)** pipeline. It grounds all responses strictly in the official vehicle manual, utilizing a two-stage retrieval process with a Cross-Encoder reranker.
+The main goal of this project was to eliminate LLM hallucinations. Instead of relying on the model's baseline training data, the system is strictly grounded in the official vehicle manual using an Advanced RAG architecture with a two-stage retrieval pipeline.
 
-## 🧠 System Architecture
+## 🏗️ Architecture & Technical Decisions
 
-The application is structured following the **Model-View-Controller (MVC)** architectural pattern to ensure separation of concerns, scalability, and maintainability.
+I structured the project using the **MVC (Model-View-Controller)** pattern. Keeping the ML logic decoupled from the UI makes it much easier to scale, test, or swap out the frontend later.
 
-### 1. Data Layer (Model & Vector Store)
-* **Document Processing:** PDF parsing via `PyPDFLoader` with `RecursiveCharacterTextSplitter` (chunk size: 1000, overlap: 200) to maintain semantic context boundaries.
-* **Embeddings:** HuggingFace `all-MiniLM-L6-v2` generates dense vector representations.
-* **Storage:** Persisted locally using **ChromaDB** for efficient similarity search.
+### 1. Data Processing (Model)
+* **Chunking:** PDF manuals are parsed and split using `RecursiveCharacterTextSplitter`. I set the overlap to 200 characters to ensure we don't lose semantic context between page breaks.
+* **Embeddings & Storage:** Text chunks are vectorized using `all-MiniLM-L6-v2` and stored locally in **ChromaDB**.
 
-### 2. Logic Layer (Controller / RAG Pipeline)
-* **Initial Retrieval:** Contextual compression retriever performs a broad vector similarity search.
-* **Reranking:** A HuggingFace **Cross-Encoder** (`ms-marco-MiniLM-L-6-v2`) re-evaluates and scores the initial retrieved chunks, passing only the highest-relevance context to the LLM.
-* **Memory Management:** LangChain handles conversational memory, dynamically injecting chat history for context-aware follow-up queries.
-* **Generation:** Powered by **Llama 3.3 (70B)** via the Groq API for rapid, high-fidelity inference.
+### 2. The RAG Pipeline (Controller)
+Standard vector search often returns loosely related chunks. To fix this, I implemented a two-stage retrieval:
+1. **Base Retrieval:** Fetches the top-K relevant documents from ChromaDB.
+2. **Cross-Encoder Reranking:** A `ms-marco-MiniLM-L-6-v2` model re-evaluates and scores these chunks. Only the highest-scoring context is passed to the LLM.
+3. **Generation:** Llama 3.3 (70B) via the Groq API generates the final response, factoring in the chat history managed by LangChain.
 
-### 3. Presentation Layer (View)
-* **Interface:** A reactive, dark-themed UI built with **Streamlit**.
-* **Features:** Session state management, isolated UI rendering logic (`chat_interface.py`), and robust error handling.
+### 3. UI (View)
+* Built with **Streamlit** for rapid prototyping. It handles session state and chat history rendering independently from the core pipeline.
 
-## 🛠️ Tech Stack & MLOps
-* **Core:** Python 3.11
-* **AI/NLP:** LangChain, Sentence-Transformers, PyTorch (CPU-optimized for lightweight inference)
-* **Infrastructure:** Docker (Multi-stage dependency resolution)
+## 🚀 How to Run (Docker)
 
-## 🚀 Quick Start (Docker Deployment)
+The app is fully containerized. 
+*Note: The `Dockerfile` is explicitly configured to pull the CPU-only version of PyTorch. This keeps the image size manageable and prevents memory limit crashes (EOF errors) during the build.*
 
-The application is fully containerized. The `Dockerfile` is highly optimized to pull lightweight CPU versions of PyTorch, preventing bloat and memory issues during the build process.
-
-### 1. Clone the Repository
+### 1. Clone & Setup
 ```bash
 git clone [https://github.com/andriysavcyn/autoinsight-rag.git](https://github.com/andriysavcyn/autoinsight-rag.git)
 cd autoinsight-rag
+```
 
-### 2. Configure Environment
-Create a .env file in the root directory and add your Groq API key:
+Create a `.env` file in the root directory with your Groq API key:
+```env
 GROQ_API_KEY=gsk_your_api_key_here
-### 3. Configure Environment
-# Build the Docker image (utilizes cached layers for faster rebuilds)
+```
+
+### 2. Build & Start
+```bash
 docker build -t autoinsight-app .
-
-# Run the container (exposes port 8501 and mounts the environment variables)
 docker run -p 8501:8501 --env-file .env autoinsight-app
+```
+Then open `http://localhost:8501` in your browser.
 
-Access the application at: http://localhost:8501
-
-Local Development (Without Docker)
-If you prefer running the application in a local virtual environment:
-
-# 1. Create and activate a virtual environment
+## 💻 Local Development
+If you want to run it without Docker:
+```bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Generate the Chroma vector database (Ensure the PDF is in the data/ folder)
+# Make sure your PDF is in data/ and generate the vector DB first:
 python document_processor.py
 
-# 4. Launch the application
 streamlit run main.py
+```
